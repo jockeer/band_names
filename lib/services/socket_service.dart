@@ -11,7 +11,12 @@ enum ServerStatus {
 
 class SocketService with ChangeNotifier {
 
-  final ServerStatus _serverStatus = ServerStatus.connecting;
+  late ServerStatus _serverStatus = ServerStatus.connecting;
+
+  late Socket _socket;
+
+  ServerStatus get serverStatus => _serverStatus;
+  Socket get socket => _socket;
 
   SocketService(){
     _initConfig();
@@ -19,15 +24,25 @@ class SocketService with ChangeNotifier {
 
   void _initConfig(){
 
-    Socket socket = io('http://10.0.2.2:4000', 
+    _socket = io('http://10.0.2.2:4000', 
       OptionBuilder()
         .setTransports(['websocket']) // for Flutter or Dart VM
         .enableAutoConnect()  // disable auto-connection
         .build()
     );
 
-    socket.onConnect((_) => debugPrint('Connect'));  
-    socket.onDisconnect((_) => debugPrint('Disconnect'));  
+    _socket.onConnect((_){
+      _serverStatus = ServerStatus.online;
+      notifyListeners();
+    });  
+    _socket.onDisconnect((_){
+      _serverStatus = ServerStatus.offline;
+      notifyListeners();
+    });   
+
+    // socket.on('nuevo-mensaje', (data){
+    //   print('nuevo-mensaje: $data');
+    // });
   }
 
 }
